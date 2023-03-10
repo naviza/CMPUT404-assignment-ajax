@@ -24,6 +24,8 @@
 import flask
 from flask import Flask, request
 import json
+from flask import send_from_directory
+
 app = Flask(__name__)
 app.debug = True
 
@@ -72,29 +74,47 @@ def flask_post_json():
         return json.loads(request.form.keys()[0])
 
 @app.route("/")
+@app.route("/static/index.html")
 def hello():
     '''Return something coherent here.. perhaps redirect to /static/index.html '''
-    return None
+    return send_from_directory('', 'static/index.html')
 
+@app.route("/json2.js")
+def for_the_json():
+    '''To get rid of the console erro'''
+    return send_from_directory('', 'static/json2.js')
+
+@app.route("/static/entity/<entity>", methods=['POST','PUT'])
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
     '''update the entities via this interface'''
-    return None
+    # I talked to Mashiad Hasan about this method
+    if request.method == 'POST' or request.method == 'PUT':
+        data = request.get_json()
+        if entity:
+            myWorld.set(entity, data)
+            return data, 200
+    else:
+        return "This path is impossible", 404
 
-@app.route("/world", methods=['POST','GET'])    
+@app.route("/world", methods=['POST','GET'])
 def world():
     '''you should probably return the world here'''
-    return None
+    return myWorld.world(),200
 
-@app.route("/entity/<entity>")    
+@app.route("/entity/<entity>")
 def get_entity(entity):
     '''This is the GET version of the entity interface, return a representation of the entity'''
-    return None
+    if not myWorld.get(entity):
+        return {}, 200
+    return myWorld.get(entity), 200
 
 @app.route("/clear", methods=['POST','GET'])
 def clear():
     '''Clear the world out!'''
-    return None
+    temp_world = myWorld.world()
+    myWorld.clear()
+    return temp_world
 
 if __name__ == "__main__":
     app.run()
